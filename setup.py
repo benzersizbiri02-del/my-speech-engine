@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tam Otomatik Setup Betiği
+Tam Otomatik Setup Beţi
 Tüm gerekli işlemleri tamamlar
 """
 import asyncio
@@ -66,7 +66,7 @@ async def main():
     print("\n" + "=" * 60)
     print("✅ SETUP TAMAMLANDI!")
     print("=" * 60)
-    print(f"\n📋 Yapılandırma Özeti:")
+    print(f"\n💫 Yapılandırma Özeti:")
     print(f"   API Key: {api_key[:20]}...")
     print(f"   WebSocket URL: {public_ws_url}")
     print(f"   Engine ID: {engine_id}")
