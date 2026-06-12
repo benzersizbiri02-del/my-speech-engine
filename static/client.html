@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElevenLabs Speech Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+        
+        .status {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .status.connected {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+        
+        .status.disconnected {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-start {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-start:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-start:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-stop {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-stop:hover:not(:disabled) {
+            background: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+        
+        .btn-stop:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .transcript {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .transcript-empty {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .message {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .message.user {
+            border-left-color: #2196f3;
+            background: #e3f2fd;
+        }
+        
+        .message.assistant {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+        }
+        
+        .message.error {
+            border-left-color: #f44336;
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        
+        .loading {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .mic-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Sesli Asistan</h1>
+        <p class="subtitle">ElevenLabs Speech Engine ile konuşun</p>
+        
+        <div class="status" id="status">
+            <span class="label">Durum</span>
+            <span id="statusText">Başlatılmamış</span>
+        </div>
+        
+        <div class="controls">
+            <button class="btn-start" id="startBtn" onclick="startConversation()">
+                <span class="mic-icon">🎤</span> Başla
+            </button>
+            <button class="btn-stop" id="stopBtn" onclick="stopConversation()" disabled>
+                ⏹️ Durdur
+            </button>
+        </div>
+        
+        <div>
+            <div class="label">Konuşma Transkripti</div>
+            <div class="transcript" id="transcript">
+                <span class="transcript-empty">Henüz bir konuşma yok...</span>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Not: Bu, temel bir örnek HTML dosyasıdır.
+        // Tam işlevsel client için @elevenlabs/react veya @elevenlabs/client kullanın.
+        // Bkz. browser-client-react.tsx ve browser-client-vanilla.js
+        
+        let isConnected = false;
+        
+        async function startConversation() {
+            try {
+                updateStatus('Bağlanılıyor...', false);
+                
+                // Mikrofon izni iste
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Token al
+                const response = await fetch('/api/token');
+                const { token } = await response.json();
+                
+                if (!token) {
+                    throw new Error('Token alınamadı');
+                }
+                
+                updateStatus('Bağlandı ✅', true);
+                addMessage('Asistan', 'Merhaba! Nasıl yardımcı olabilirim?', 'assistant');
+                
+                // Butonları güncelle
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                isConnected = true;
+                
+                // Not: Gerçek konuşma işlemesi için @elevenlabs/react kullanın
+                addMessage('Sistem', 'Tam konuşma desteği için React versiyonunu kullanın', 'error');
+                
+            } catch (error) {
+                console.error('Hata:', error);
+                updateStatus('Hata: ' + error.message, false);
+                addMessage('Hata', error.message, 'error');
+            }
+        }
+        
+        function stopConversation() {
+            updateStatus('Bağlantı kesildi', false);
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            isConnected = false;
+            addMessage('Sistem', 'Konuşma sona erdi', 'assistant');
+        }
+        
+        function updateStatus(text, connected) {
+            const status = document.getElementById('status');
+            document.getElementById('statusText').textContent = text;
+            status.className = 'status ' + (connected ? 'connected' : 'disconnected');
+        }
+        
+        function addMessage(name, text, type = 'user') {
+            const transcript = document.getElementById('transcript');
+            
+            // "Henüz bir konuşma yok" mesajını temizle
+            if (transcript.querySelector('.transcript-empty')) {
+                transcript.innerHTML = '';
+            }
+            
+            const message = document.createElement('div');
+            message.className = 'message ' + type;
+            message.innerHTML = `<strong>${name}:</strong> ${text}`;
+            transcript.appendChild(message);
+            transcript.scrollTop = transcript.scrollHeight;
+        }
+        
+        // Sayfa yüklendiğinde durum kontrol et
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/health');
+                const health = await response.json();
+                
+                if (health.api_key_set && health.engine_id_set) {
+                    updateStatus('Hazır ✅', false);
+                } else {
+                    updateStatus('Hata: Ayarlar eksik', false);
+                    addMessage('Hata', 'ELEVENLABS_API_KEY veya ENGINE_ID ayarlanmamış', 'error');
+                }
+            } catch (error) {
+                updateStatus('Hata: Sunucuya ulaşılamıyor', false);
+            }
+        });
+    </script>
+</body>
+</html>

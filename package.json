@@ -1,0 +1,36 @@
+{
+  "name": "my-speech-engine",
+  "version": "1.0.0",
+  "description": "ElevenLabs Speech Engine - Python Backend + React/Vanilla JS Browser Client",
+  "type": "module",
+  "main": "app.py",
+  "scripts": {
+    "dev": "python app.py",
+    "create-engine": "python create_engine.py",
+    "server": "python server.py",
+    "ngrok": "ngrok http 3001"
+  },
+  "keywords": [
+    "elevenlabs",
+    "speech-engine",
+    "voice-ai",
+    "websocket",
+    "real-time-conversation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0"
+  },
+  "dependencies": {
+    "@elevenlabs/react": "latest",
+    "@elevenlabs/client": "latest",
+    "@elevenlabs/elevenlabs-js": "latest",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0"
+  },
+  "overrides": {
+    "livekit-client": "2.16.1"
+  }
+}
